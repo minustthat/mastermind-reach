@@ -12,30 +12,7 @@ const sessionClient = new SessionClient()
 app.use(cors())
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
-const generateFourNumbers = async () => {
-    try
-    {
-        const url = 'https://www.random.org/clients/http/api/'
-        const num = await fetch(url, {
-            headers: {
-                'Content-type': 'plain/text'
-            }, body: JSON.stringify({
-                num: 4,
-                min: 0,
-                max: 7,
-                col: 1,
-                base: 10,
-                format: 'plain',
-                rnd: 'new'
-            })
-        })
-        return num.json()
-    }
-    catch (err: unknown)
-    {
 
-    }
-}
 const generateBody = (obj: Object) => {
     let finalObject = {}
     Object.assign(obj,finalObject)
