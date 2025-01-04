@@ -17,6 +17,7 @@ const sessionClient = new SessionClient()
 
 
 const generateBody = (obj: Object): {} => {
+
     let finalObject = {}
     Object.assign(obj,finalObject)
     return finalObject
