@@ -1,24 +1,28 @@
 import express, {Request, Response} from 'express'
 import cors from 'cors'
-import bodyParser from "body-parser";
+
 import {connectToDatabase} from "../database/database.ts";
 import SessionClient from "../database/sessionClient.ts";
 import {Player} from "../gameComponents/player.ts";
-import {Difficulty} from "../gameComponents/difficulties.ts";
-import Game from "../gameComponents/game.ts";
-const app = express()
-connectToDatabase().catch(err => console.log(err))
-const sessionClient = new SessionClient()
-app.use(cors())
-app.use(bodyParser.urlencoded({ extended: false }));
-app.use(bodyParser.json());
+import {SinglePlayerGameBuilder} from "../gameModes/singlePlayerGameBuilder.ts";
+import SinglePlayerGame from "../gameModes/singlePlayerGame.ts";
+import bodyParser from "body-parser";
 
-const generateBody = (obj: Object) => {
+const app = express()
+app.use(cors())
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+connectToDatabase().catch(err=> console.log(err))
+const sessionClient = new SessionClient()
+
+
+const generateBody = (obj: Object): {} => {
+
     let finalObject = {}
     Object.assign(obj,finalObject)
     return finalObject
 }
-app.get('/', (req: Request, res: Response) => {
+app.get('/', (req: Request, res: Response): void => {
     res.status(200).set({'Content-Type': 'text/html'}).send(`
         <form action = "/newUser" method="POST"> 
         <label for="name"> Username: </label>
@@ -27,12 +31,13 @@ app.get('/', (req: Request, res: Response) => {
         </form>
     `)
 })
-app.post('/newUser', (req: Request, res: Response) => {
+app.post('/newUser', (req: Request, res: Response): void => {
     try{
         req.accepts('text/html')
         const name: string = req.body.name
         const player = new Player(name)
-        res.send("first step")
+        res.status(200).send(`${name}`)
+        console.log(name)
         player.emit('registered', name)
 
     } catch(err: unknown){
@@ -41,26 +46,28 @@ app.post('/newUser', (req: Request, res: Response) => {
 })
 
 app.get('/newgame', async (req: Request, res: Response) => {
-
+    res.send(`
+        <form action = "/gameconfig" method="POST"> 
+        <label for="difficultyLevel"> Username: </label>
+        <input type = "text" id="difficultyLevel" name="difficultyLevel"> 
+        <input type="submit">  
+        </form>
+    `)
 })
-app.post('/newgame', async (req: Request, res: Response) => {
+app.post('/gameconfig', async (req: Request, res: Response) => {
+
     try
     {
-        const difficulty = (difficulty: string) => {
-            const diff: Difficulty = difficulty == "easy" ? Difficulty.EASY : difficulty == "medium" ? Difficulty.MEDIUM : difficulty == "hard" ? Difficulty.HARD : Difficulty.EASY
-            return diff
-        }
-        let game = new Game()
-        game.setPlayer(new Player(req.body.name))
-        game.setDate(Date.now().toString())
-        game.setDifficultyLevel(difficulty(req.body.difficultyLevel))
-        game.setHintsEnabled(game.getDifficultyLevel() == Difficulty.HARD ? false : true)
-        // hints only enabled for hard difficulty games.
-        game.setHints(game.getHintsEnabled() == true ? [] : [])
-        // @ts-ignore
-        game.setObjective(req.body.objective)
-        res.send(generateBody(game))
-        await sessionClient.addToDb(game)
+        req.accepts('text/json')
+        res.status(201)
+        const game: SinglePlayerGame = new SinglePlayerGameBuilder()
+            .withPlayer(new Player(req.body.Player))
+            .withDifficulty(req.body.difficultyLevel)
+            .withHintsEnabled(req.body.difficultyLevel != 'hard')
+            // hints only enabled for hard difficulty games.
+            .withHints(req.body.setHints == true ? ['none'] : ['none'])
+            .build()
+        res.send(game)
     }
     catch (err: unknown)
     {
@@ -70,6 +77,6 @@ app.post('/newgame', async (req: Request, res: Response) => {
 app.post('/play', (req: Request, res: Response) => {
 })
 
-app.listen(3000, () => {
+app.listen(3000, (): void => {
     console.log('server is running.')
 })
