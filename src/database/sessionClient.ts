@@ -23,20 +23,53 @@ export default class SessionClient{
         }
     }
 
-    findUser = async(username: string, pwd: string) => {
+    validateUser = async(username: string, pwd: string): Promise<boolean> => {
+        let exists: boolean = false
         try{
             const user = await userCollection.findOne({username: username})
+            if(user == null){
+                console.log('user does not exist.')
+                exists = false
+            }
             // @ts-ignore
             const password = await bcrypt.compare(pwd,user.password)
-            if(!user || !password){
-                console.log('Re-enter information.')
+            if(!password){
+                console.log('incorrect password.')
+                exists = false
             }
-            return user
+
+            if(password){
+                exists = true
+            }
             //compare the hash of the stored version, and current version.
                 // @ts-ignore
         }
         catch(err){
             console.log(`Incorrect information: ${err}`)
+            return false
         }
+        console.log(`name: ${username} password: ${pwd}`)
+        console.log(exists)
+        return exists
+    }
+    // if all goes well here, send the cookie.
+
+    checkForExistingUser = async (name: string, emailAddress: string) => {
+        try {
+            const usernameExists = await userCollection.findOne({username: name})
+            if (usernameExists != null) {
+                console.log('username exists already')
+                return
+            }
+            const emailExists = await userCollection.findOne({email: emailAddress})
+            if (emailExists != null) {
+                console.log('email exists already.')
+                return
+            }
+        }
+        catch(err){
+            return err
+        }
+        return {name, emailAddress}
     }
 }

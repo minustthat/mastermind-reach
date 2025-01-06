@@ -9,28 +9,50 @@ export interface Player{
 
 export const registerPlayer = async (name: string, emailAddress: string, pwd: string) => {
     const client: SessionClient = new SessionClient()
+    let player:Player = {
+        username: '',
+        email: '',
+        password: '',
+        dateRegistered: Date.now().toString()
+    }
     try{
+        const check = await client.checkForExistingUser(name, emailAddress)
+        if(!check){
+            return
+        }
         const salt: string =  bcrypt.genSaltSync(10)
         const hashedPassword: string = await bcrypt.hash(pwd,salt)
-        const player: Player = {
+        player = {
             username: name,
             email: emailAddress,
             password: hashedPassword,
             dateRegistered: Date.now().toString()
         }
-        await client.addUserToDb(player).catch(err=> console.log(`Error: ${err}`))
-        console.log(player)
     }
     catch(err){
-        console.log(`Error: ${err}`)
+        console.log(`Error registering: ${err}`)
     }
+    await client.addUserToDb(player).catch(err=> console.log(`Error: ${err}`))
 }
- export const loginPlayer = async (name: string, password: string)=> {
+
+export const loginPlayer = async (name: string, password: string)=> {
          const client = new SessionClient()
-         await client.findUser(name,password)
+
+    try{
+        const isValid: boolean  = await client.validateUser(name,password)
+        if(!isValid) {
+            return false
+        }
+
+    }
+      catch(err){
+             console.log('login player method error.')
+      }
+      return true
  }
+
 
 // encode password
 // send encoded version to db
 // use async version of hash function to avoid blocking the event loop.
-const client = new SessionClient()
+// if validate user goes well, I can send the cookie inside of this method.
