@@ -6,6 +6,7 @@ declare module "express-session" {
 /* this declaration is needed in order to set the isAuth property on Session to true. Without it, typescript is unable to find this
 property.
  */
+//<editor-fold desc = "imported packages, database connection, and middleware.">
 import express, {NextFunction, Request, Response} from 'express'
 import cors from 'cors'
 import session from 'express-session'
@@ -33,13 +34,14 @@ app.use(session({
     store: store
 }))
 app.use(express.json());
-
+//</editor-fold>
 const sessionClient = new SessionClient()
 const generateBody = (obj: Object): {} => {
     let finalObject = {}
     Object.assign(obj,finalObject)
     return finalObject
 }
+//<editor-fold desc = "registration">
 app.get('/register', (req: Request, res: Response): void => {
     res.status(200).set({'Content-Type': 'text/html'}).send(`
         <form action = "/newuser" method="POST"> 
@@ -71,7 +73,9 @@ app.post('/newuser', express.urlencoded({ extended: true }),(req: Request, res: 
         console.log(err)
     }
 })
+//</editor-fold>
 
+//<editor-fold desc = "login"
 app.get('/login', (req,res) => {
     res.status(200).set({'Content-Type': 'text/html'}).send(`
         <form action = "/newsession" method="POST"> 
@@ -100,15 +104,21 @@ app.post('/newsession', express.urlencoded({ extended: true }),  async (req: Req
     }
 
 })
-// app.get('/newgame', async (req: Request, res: Response) => {
-//     res.send(`
-//         <form action = "/gameconfig" method="POST">
-//         <label for="difficultyLevel"> Username: </label>
-//         <input type = "text" id="difficultyLevel" name="difficultyLevel">
-//         <input type="submit">
-//         </form>
-//     `)
-// })
+//</editor-fold>
+
+//<editor-fold desc = "game settings and setup">
+app.get('/setup', async (req: Request, res: Response) => {
+    res.send(`
+        <form action = "/gameconfig" method="POST">
+        <label for="difficultyLevel"> Please Select difficulty </label>
+        <label 
+        <input type = "radio" id="medium" name="medium" value = "easy">
+        <input type = "radio" id="difficultyLevel" name="difficultyLevel" value = "medium">
+        <input type = "radio" id="difficultyLevel" name="difficultyLevel" value = "hard">
+        <input type="submit">
+        </form>
+    `)
+})
 // app.post('/gameconfig', async (req: Request, res: Response) => {
 //
 //     try
@@ -129,9 +139,12 @@ app.post('/newsession', express.urlencoded({ extended: true }),  async (req: Req
 //         console.log(err)
 //     }
 // })
+//</editor-fold>
+// will route to a specific endpoint based on difficulty, and or multiplayer.
+//<editor-fold desc = "Begin GamePlay">
 app.post('/play', (req: Request, res: Response) => {
 })
-
+//</editor-fold>
 app.listen(3000, (): void => {
     console.log('server is running.')
 })
