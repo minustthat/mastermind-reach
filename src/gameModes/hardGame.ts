@@ -3,7 +3,7 @@ import {Player} from "../gameComponents/player.ts";
 
 class HardGame extends SinglePlayerGameConfiguration{
     override player: Player
-    override difficulty: string = 'easy';
+    override difficulty: string = 'hard';
     override hints: string[] = []
     override hintsEnabled: boolean = false
     constructor(player:Player){
