@@ -2,7 +2,7 @@ import {Player} from "../gameComponents/player.ts";
 import {generateNumbers} from "../generateNumbers.ts";
 import SinglePlayerGame from "./singlePlayerGame.ts";
 
-export class SinglePlayerGameBuilder {
+export class GameBuilder {
     player: Player;
     difficultyLevel: string;
     hintsEnabled: boolean;
