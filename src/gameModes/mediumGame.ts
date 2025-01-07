@@ -3,7 +3,7 @@ import {Player} from "../gameComponents/player.ts";
 
 class MediumGame extends SinglePlayerGameConfiguration{
     override player: Player
-    override difficulty: string = 'easy';
+    override difficulty: string = 'medium';
     override hints: string[] = []
     override hintsEnabled: boolean = true
     constructor(player:Player){
