@@ -1,3 +1,5 @@
+import {PlayerEmitter} from "../events.ts";
+
 declare module "express-session" {
     interface SessionData {
         isAuth: boolean
@@ -7,15 +9,13 @@ declare module "express-session" {
 property.
  */
 //<editor-fold desc = "imported packages, database connection, and middleware.">
-import express, {NextFunction, Request, Response} from 'express'
+import express, {Request, Response} from 'express'
 import cors from 'cors'
 import session from 'express-session'
 import {connectToDatabase} from "../database/database.ts";
-import SessionClient from "../database/sessionClient.ts";
-import {registerPlayer, loginPlayer} from "../gameComponents/player.ts";
+import {registerPlayer, loginPlayer, Player} from "../game-components/player.ts";
 // @ts-ignore
 import connectMongo from 'connect-mongodb-session'
-
 const app = express()
 connectToDatabase().catch(err=> console.log(err))
 
@@ -35,12 +35,7 @@ app.use(session({
 }))
 app.use(express.json());
 //</editor-fold>
-const sessionClient = new SessionClient()
-const generateBody = (obj: Object): {} => {
-    let finalObject = {}
-    Object.assign(obj,finalObject)
-    return finalObject
-}
+
 //<editor-fold desc = "registration">
 app.get('/register', (req: Request, res: Response): void => {
     res.status(200).set({'Content-Type': 'text/html'}).send(`
@@ -66,8 +61,6 @@ app.post('/newuser', express.urlencoded({ extended: true }),(req: Request, res: 
         });
         const {username,email,password} = req.body
         registerPlayer(username,email,password).catch(err=> console.log(`Err: ${err}`))
-        req.session.isAuth = true
-        console.log(req.session)
         res.redirect('/register')
     } catch(err: unknown){
         console.log(err)
@@ -89,6 +82,10 @@ app.get('/login', (req,res) => {
     `)
 })
 app.post('/newsession', express.urlencoded({ extended: true }),  async (req: Request, res: Response) => {
+    const playerEmitter = new PlayerEmitter()
+    playerEmitter.on('login', (player: Player): Player => {
+        return player
+    })
     try{
         const {username,password} = req.body
         const accessGranted = await loginPlayer(username,password)
@@ -109,7 +106,7 @@ app.post('/newsession', express.urlencoded({ extended: true }),  async (req: Req
 //<editor-fold desc = "game settings and setup">
 app.get('/setup', async (req: Request, res: Response) => {
     res.send(`
-        <form action = "/gameconfig" method="POST">
+        <form action = "/config" method="POST">
         <label for="difficultyLevel"> Please Select difficulty </label>
         <label 
         <input type = "radio" id="medium" name="medium" value = "easy">
@@ -119,26 +116,9 @@ app.get('/setup', async (req: Request, res: Response) => {
         </form>
     `)
 })
-// app.post('/gameconfig', async (req: Request, res: Response) => {
-//
-//     try
-//     {
-//         req.accepts('text/json')
-//         res.status(201)
-//         const game: SinglePlayerGame = new SinglePlayerGameBuilder()
-//             .withPlayer(new Player(req.body.Player))
-//             .withDifficulty(req.body.difficultyLevel)
-//             .withHintsEnabled(req.body.difficultyLevel != 'hard')
-//             // hints only enabled for hard difficulty games.
-//             .withHints(req.body.setHints == true ? ['none'] : ['none'])
-//             .build()
-//         res.send(game)
-//     }
-//     catch (err: unknown)
-//     {
-//         console.log(err)
-//     }
-// })
+ app.post('/config', async (req: Request, res: Response) => {
+
+ })
 //</editor-fold>
 // will route to a specific endpoint based on difficulty, and or multiplayer.
 //<editor-fold desc = "Begin GamePlay">
