@@ -74,11 +74,5 @@ export default class SinglePlayerGameConfiguration extends EventEmitter implemen
             return guess
         }
     }
-        /*
-    Goals:
-    keep track of guess count
-    compare guess to objective
-    return feedback
-    */
-// lets make the guess method only execute guesses, and have a different method for calling the api.
+
 
