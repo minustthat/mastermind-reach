@@ -1,4 +1,3 @@
-
 import Player from '../game-components/player.ts'
 export interface Game {
     player: Player | Player[]
