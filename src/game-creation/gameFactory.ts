@@ -2,9 +2,7 @@ import Player from "../game-components/player.ts";
 import EasyGame from "../game-modes/easyGame.ts";
 import MediumGame from "../game-modes/mediumGame.ts";
 import HardGame from "../game-modes/hardGame.ts";
-import {Game} from "./game.ts";
 import SinglePlayerGameConfiguration from "./gameConfiguration.ts";
-
 
 export const gameFactory = (player: Player, difficulty: string): SinglePlayerGameConfiguration => {
     switch(difficulty){

@@ -1,5 +1,3 @@
-import {join} from 'node:path'
-
 const buildURL = (difficulty: string) => {
     let num;
     let max;
@@ -23,15 +21,13 @@ const buildURL = (difficulty: string) => {
 
 export const generateNumbers = async (difficulty: string): Promise<string | undefined> => {
     const url = buildURL(difficulty);
-    try{
+    try {
         let res = await fetch(url)
         return await res.text()
-    }
-    catch(err: unknown){
+    } catch (err: unknown) {
         console.log(`Error: ${err}`)
     }
 }
-
 
 
 // num is the only differentiating factor, so just make it a variable according to the difficulty.

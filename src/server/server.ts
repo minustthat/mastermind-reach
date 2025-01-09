@@ -1,5 +1,6 @@
 import {PlayerEmitter} from "../events.ts";
 import SessionClient from '../database/sessionClient.ts'
+
 declare module "express-session" {
     interface SessionData {
         isAuth: boolean
@@ -8,8 +9,8 @@ declare module "express-session" {
     }
 }
 
-let checkAuth = (req: Request,res: Response,next: NextFunction) => {
-    if(req.session.isAuth){
+let checkAuth = (req: Request, res: Response, next: NextFunction) => {
+    if (req.session.isAuth) {
         return next()
     }
     res.redirect('/login')
@@ -22,15 +23,15 @@ import express, {NextFunction, Request, Response} from 'express'
 import cors from 'cors'
 import session from 'express-session'
 import {connectToDatabase} from "../database/database.ts";
-import Player from "../game-components/player.ts";
 // @ts-ignore
 import connectMongo from 'connect-mongodb-session'
 import {ObjectId} from "mongodb";
 import SinglePlayerGameConfiguration from "../game-creation/gameConfiguration.ts";
 import {gameFactory} from "../game-creation/gameFactory.ts";
+
 const sessionClient = new SessionClient()
 const app = express()
-connectToDatabase().catch(err=> console.log(err))
+connectToDatabase().catch(err => console.log(err))
 
 app.use(cors())
 const MongoDBStore = connectMongo(session)
@@ -65,24 +66,24 @@ app.get('/register', (req: Request, res: Response): void => {
         </form>
     `)
 })
-app.post('/register', express.urlencoded({ extended: true }),(req: Request, res: Response): void => {
-    try{
+app.post('/register', express.urlencoded({extended: true}), (req: Request, res: Response): void => {
+    try {
         res.status(201)
         req.setTimeout(5000, () => {
             console.log('Request timed out');
             res.status(408).send('Request Timeout');
         });
-        const {username,email,password} = req.body
-        sessionClient.registerPlayer(username,email,password).catch(err=> console.log(`Err: ${err}`))
+        const {username, email, password} = req.body
+        sessionClient.registerPlayer(username, email, password).catch(err => console.log(`Err: ${err}`))
         res.redirect('/register')
-    } catch(err: unknown){
+    } catch (err: unknown) {
         console.log(err)
     }
 })
 //</editor-fold>
 
 //<editor-fold desc = "login"
-app.get('/login', (req,res) => {
+app.get('/login', (req, res) => {
     res.status(200).set({'Content-Type': 'text/html'}).send(`
         <form action = "/login" method="POST"> 
         <label for="username"> Username: </label>
@@ -94,11 +95,11 @@ app.get('/login', (req,res) => {
         </form>
     `)
 })
-app.post('/login', express.urlencoded({ extended: true }),  async (req: Request, res: Response) => {
-    try{
-        const {username,password} = req.body
-        const user = await sessionClient.validateUser(username,password)
-        if(!user){
+app.post('/login', express.urlencoded({extended: true}), async (req: Request, res: Response) => {
+    try {
+        const {username, password} = req.body
+        const user = await sessionClient.validateUser(username, password)
+        if (!user) {
             res.redirect('/login')
         }
         req.session.isAuth = true
@@ -106,21 +107,17 @@ app.post('/login', express.urlencoded({ extended: true }),  async (req: Request,
         res.redirect('/setup')
         //redirect to manage state
         console.log(req.session.userId)
-
-
-    }
-    catch(err){
+    } catch (err) {
         console.log(`err:${err}`)
     }
-
 })
 //</editor-fold>
 
 //<editor-fold desc = "game settings and setup">
 
 // set difficulty
-app.get('/setup', checkAuth,async (req: Request, res: Response) => {
-        res.send(`
+app.get('/setup', checkAuth, async (req: Request, res: Response) => {
+    res.send(`
         <form action = "/setup" method="POST">
         <label for="difficulty"> Please Select difficulty </label>
        
@@ -133,50 +130,43 @@ app.get('/setup', checkAuth,async (req: Request, res: Response) => {
         <input type="submit">
         </form>
    `)
-    })
-
-app.post('/setup', express.urlencoded({ extended: true }),async (req: Request, res: Response) => {
+})
+app.post('/setup', express.urlencoded({extended: true}), async (req: Request, res: Response) => {
     res.status(200).redirect('/play')
     const user = await sessionClient.returnUserFromId(req.session.userId)
-    const newgame: SinglePlayerGameConfiguration = gameFactory(user,req.body.difficulty)
+    const newgame: SinglePlayerGameConfiguration = gameFactory(user, req.body.difficulty)
     req.session.game = newgame
     console.log(newgame)
-
 })
-
-
 //</editor-fold>
 // will route to a specific endpoint based on difficulty, and or multiplayer.
 //<editor-fold desc = "Begin GamePlay">
 
 // play game
-     app.get('/play', express.urlencoded({ extended: true }), (req: Request, res: Response) => {
-         res.send(`
+app.get('/play', express.urlencoded({extended: true}), (req: Request, res: Response) => {
+    res.send(`
                 <form action = "/game" method="POST">
                 <input type="text" id="attempt" name="attempt" />
                 <input type="submit"> 
                 </form>
 `)
-         app.post('/game', express.urlencoded({ extended: true }),async (req, res) => {
-             try {
-                 const user = await sessionClient.returnUserFromId(req.session.userId)
-                 const game: SinglePlayerGameConfiguration  = req.session.game ? req.session.game : gameFactory(user,'easy')
-
-                 console.log(game)
-                 const guess = game.startGame()
-                 if (guess) {
-                     if (guess) {
-                         guess(req.body.attempt).then(data => console.log(data))
-                     }
-
-                 }
-             } catch(err){
-                console.log(err)
-             }
-
-         })
-     })
+    app.post('/game', express.urlencoded({extended: true}), async (req, res) => {
+        try {
+            const user = await sessionClient.returnUserFromId(req.session.userId)
+            const game: SinglePlayerGameConfiguration = req.session.game ? req.session.game : gameFactory(user, 'easy')
+            console.log(game)
+            const guess = game.startGame()
+            if (guess) {
+                if (guess) {
+                    guess(req.body.attempt).then(data => console.log(data))
+                }
+            }
+        } catch (err) {
+            console.log(err)
+        }
+    })
+})
 //</editor-fold>
-     app.listen(3000, (): void => {
-         console.log('server is running.')
-     })
+app.listen(3000, (): void => {
+    console.log('server is running.')
+})
