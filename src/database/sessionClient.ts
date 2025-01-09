@@ -1,55 +1,50 @@
-import {sessionCollection,userCollection} from "./database.ts";
+import {sessionCollection, userCollection} from "./database.ts";
 import Player from "../game-components/player.ts";
 import bcrypt from "bcrypt";
 import {ObjectId} from "mongodb";
 
-export default class SessionClient{
+export default class SessionClient {
     addSessionToDb = async (obj: Object) => {
         try {
             await sessionCollection.insertOne(obj)
             return `Object inserted: ${JSON.stringify(obj)}`
-        }
-        catch(err: unknown){
+        } catch (err: unknown) {
             return err
         }
     }
-
     addUserToDb = async (player: Player) => {
-        try{
+        try {
             await userCollection.insertOne(player)
             return `Object inserted: ${JSON.stringify(player)}`
-        }
-        catch(err){
+        } catch (err) {
             console.log(`Error adding User to DB: ${err}`)
         }
     }
-
-    validateUser = async(username: string, pwd: string): Promise<ObjectId | undefined>  => {
-       let player: Player = {
+    validateUser = async (username: string, pwd: string): Promise<ObjectId | undefined> => {
+        let player: Player = {
             username: '',
             email: '',
             password: '',
             dateRegistered: Date.now().toString()
         }
         let id: ObjectId = new ObjectId
-        try{
+        try {
             const user = await userCollection.findOne({username: username})
-            if(user == null){
+            if (user == null) {
                 return
             }
             // @ts-ignore
-            const password = await bcrypt.compare(pwd,user.password)
-            if(!password) {
+            const password = await bcrypt.compare(pwd, user.password)
+            if (!password) {
                 return
             }
 
-            if(password){
+            if (password) {
                 id = user ? user._id : new ObjectId()
-             }
+            }
             //compare the hash of the stored version, and current version.
-                // @ts-ignore
-        }
-        catch(err){
+            // @ts-ignore
+        } catch (err) {
             console.log(`Incorrect information: ${err}`)
         }
         console.log(`name: ${username} password: ${pwd}`)
@@ -68,37 +63,35 @@ export default class SessionClient{
                 console.log('email exists already.')
                 return
             }
-        }
-        catch(err){
+        } catch (err) {
             return err
         }
         return {name, emailAddress}
     }
     registerPlayer = async (name: string, emailAddress: string, pwd: string) => {
-        let player:Player = {
+        let player: Player = {
             username: '',
             email: '',
             password: '',
             dateRegistered: Date.now().toString()
         }
-        try{
+        try {
             const check = await this.checkForExistingUser(name, emailAddress)
-            if(!check){
+            if (!check) {
                 return
             }
-            const salt: string =  bcrypt.genSaltSync(10)
-            const hashedPassword: string = await bcrypt.hash(pwd,salt)
+            const salt: string = bcrypt.genSaltSync(10)
+            const hashedPassword: string = await bcrypt.hash(pwd, salt)
             player = {
                 username: name,
                 email: emailAddress,
                 password: hashedPassword,
                 dateRegistered: Date.now().toString()
             }
-        }
-        catch(err){
+        } catch (err) {
             console.log(`Error registering: ${err}`)
         }
-        await this.addUserToDb(player).catch(err=> console.log(`Error: ${err}`))
+        await this.addUserToDb(player).catch(err => console.log(`Error: ${err}`))
     }
     returnUserFromId = async (id: ObjectId | undefined): Promise<Player> => {
         let player: Player = {
@@ -112,9 +105,9 @@ export default class SessionClient{
             player.username = user ? user.username : ''
             player.email = user ? user.email : ''
             player.password = user ? user.password : user
-            player.dateRegistered =user ? user.dateRegistered : player.dateRegistered
+            player.dateRegistered = user ? user.dateRegistered : player.dateRegistered
 
-        } catch(err){
+        } catch (err) {
             console.log(`find by id err: ${err}`)
         }
         return player
