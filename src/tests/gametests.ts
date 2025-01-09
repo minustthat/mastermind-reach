@@ -41,7 +41,7 @@ const easygame: SinglePlayerGameConfiguration = gameFactory(player1, 'easy')
 //     return `${message} ${feedback}`
 // }
 
-let gameTest: SinglePlayerGameConfiguration = easygame.startGame()
+let gameTest= = easygame.startGame()
 
 
 
