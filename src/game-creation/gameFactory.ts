@@ -1,4 +1,4 @@
-import Player from "../game-components/player.ts";
+import {Player} from "../game-components/player.ts";
 import EasyGame from "../game-modes/easyGame.ts";
 import MediumGame from "../game-modes/mediumGame.ts";
 import HardGame from "../game-modes/hardGame.ts";
