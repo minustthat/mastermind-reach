@@ -2,54 +2,21 @@
 import {Player} from "../gameComponents/player.ts";
 import {Game} from "./game.ts";
 import EventEmitter from "node:events";
+import {generateNumbers} from "../generateNumbers.ts";
+import {Memoize} from "typescript-memoize";
 
 export default class SinglePlayerGameConfiguration extends EventEmitter implements Game {
     player: Player
     date: string = Date.now().toString()
     hints: string[] = []
     hintsEnabled: boolean = true
-    guessCount: number = 0
     result: string = ''
     difficulty: string = ''
-
+    guessCount: number = 0
     constructor(player: Player){
         super()
         this.player = player
     }
-
-    async guess(guess: string, objective: Promise<string>): Promise<string>{
-        let message = ''
-        let feedback: string | null = ''
-        const objAsArray = Array.from( await objective)
-        // array from objective so I can filter through it. If I were to do this with strings, they would have to be in the same order.
-        const guessAsArray = Array.from(guess)
-        // array from the guess entered, so I can compare the guess array to the objective array.
-        let filteredArray = objAsArray.filter(i => {
-            return guessAsArray.includes(i)
-        })
-        // the number of matches
-        if(filteredArray.length == guessAsArray.length){
-            message = 'You win!'
-            feedback = `You have ${objAsArray.length} numbers correct!`
-            // if the length of the filtered array is the same as the length of the guess array, then they are a perfect match: which leads to a victory!
-        }
-        this.guessCount += 1
-        feedback = `You have ${filteredArray.length} numbers correct!`
-        // if they are not the same length, then increment the guesscount by one, and tell the user how many numbers they guessed correctly.
-
-        if (this.guessCount > 10) {
-            message = 'Try again?'
-            this.result = 'loss'
-            this.generateResult()
-        }
-        // we need to find a way to keep track of the guessCount, so we can log a loss once it gets to that point. How???
-        console.log(objAsArray)
-        console.log(guessAsArray)
-        console.log(filteredArray)
-        // if the guess count exceeds 10, the game is a loss.
-        return `${message} ${feedback}`
-    }
-
     generateResult(): object {
         return {
             player: this.player.username,
@@ -60,6 +27,51 @@ export default class SinglePlayerGameConfiguration extends EventEmitter implemen
         }
     }
 
+    generateTargetNumber = async () => {
+        const apiCall = generateNumbers(this.difficulty)
+        const randomNumber = await apiCall
+        const randomNumberArray: string[] = randomNumber ? Array.from(randomNumber) : []
+        return  randomNumberArray.filter(item => item !== '\n');
+    }
+    startGame =  () => {
+        let attemptCount: number = 0
+        let targetNumber = this.generateTargetNumber()
+        let guess = async (num: string) => {
+                let feedback = ''
+                try {
+                    attemptCount++
+                    const guessArray: string[] = Array.from(num)
+                    // @ts-ignore
+                    const matches = await targetNumber
+                    const filteredArray = matches.filter(i => guessArray.includes(i))
+                    if (filteredArray.length == guessArray.length) {
+                        feedback = "you win!"
+                        this.result = 'won'
+                        this.emit('win')
+                        return
+                    }
+                    if (attemptCount > 10) {
+                        feedback = "Game over!"
+                        this.emit('loss')
+                        return
+                    }
+                    feedback  = `You have ${filteredArray.length} numbers correct!`
+                } catch (err) {
+                    console.log(`Err: ${err}`)
+                }
+            return `${feedback}`
+            }
+            return guess
+        }
+    }
+        /*
+    Goals:
+    keep track of guess count
+    compare guess to objective
+    return feedback
+    */
 
+// to keep track of guessCount, I will define it on the outside of the closure.
 
-}
+// lets make the guess method only execute guesses, and have a different method for calling the api.
+
