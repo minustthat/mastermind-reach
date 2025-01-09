@@ -1,5 +1,5 @@
 import {Difficulty} from "../game-components/difficulties.ts";
-import {Player} from '../game-components/player.ts'
+import Player from '../game-components/player.ts'
 export interface Game {
     player: Player | Player[]
     // persisted
@@ -9,7 +9,6 @@ export interface Game {
     // based on difficultyLevel, captured during time of registration as well
     hints?: string[]
     // dependent on hintsEnabled
-    guessCount: number
     // number of total guesses, will be incremented.
     result: string
     // whether the game was a win or lose
