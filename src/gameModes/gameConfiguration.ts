@@ -25,41 +25,51 @@ export default class SinglePlayerGameConfiguration extends EventEmitter implemen
             difficulty: this.difficulty,
             result: this.result
         }
+        // returns an object of the game so I can store results to a database.
     }
 
     generateTargetNumber = async () => {
         const apiCall = generateNumbers(this.difficulty)
+        // calls the api
         const randomNumber = await apiCall
+        // awaits the result, to return a definite answer
         const randomNumberArray: string[] = randomNumber ? Array.from(randomNumber) : []
+        // makes an array for the returned result, and returns an empty array to avoid null exceptions
         return  randomNumberArray.filter(item => item !== '\n');
+        // returns the array. Without this filter, the array would have line breaks between each character since the api responds with columns.
     }
     startGame =  () => {
         let attemptCount: number = 0
+        // keeps track of the number of tries, if this number exceeds 10 then the game is over and the user has lost.
         let targetNumber = this.generateTargetNumber()
+        // returns the result of the api call to a variable
         let guess = async (num: string) => {
                 let feedback = ''
+            // must be returned, so I left it out of the scope of the try catch block.
                 try {
                     attemptCount++
+                    // increment attempt counter
                     const guessArray: string[] = Array.from(num)
+                    //make array from the user's argument.
                     // @ts-ignore
-                    const matches = await targetNumber
-                    const filteredArray = matches.filter(i => guessArray.includes(i))
-                    if (filteredArray.length == guessArray.length) {
-                        feedback = "you win!"
+                    const target = await targetNumber
+                    const matchingNumberArray = target.filter(i => guessArray.includes(i))
+                    // filter out each number inside of the target array that does not also appear in the guess array
+                    if (matchingNumberArray.length == guessArray.length) {
                         this.result = 'won'
                         this.emit('win')
-                        return
+                        return "you win!"
                     }
                     if (attemptCount > 10) {
-                        feedback = "Game over!"
                         this.emit('loss')
-                        return
+                        return "Game over!"
                     }
-                    feedback  = `You have ${filteredArray.length} numbers correct!`
+                    feedback  = `You have ${matchingNumberArray.length} numbers correct!`
+                    // the number of matches
                 } catch (err) {
                     console.log(`Err: ${err}`)
                 }
-            return `${feedback}`
+                return `${feedback}`
             }
             return guess
         }
@@ -70,8 +80,5 @@ export default class SinglePlayerGameConfiguration extends EventEmitter implemen
     compare guess to objective
     return feedback
     */
-
-// to keep track of guessCount, I will define it on the outside of the closure.
-
 // lets make the guess method only execute guesses, and have a different method for calling the api.
 

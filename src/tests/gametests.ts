@@ -4,7 +4,6 @@ import SinglePlayerGameConfiguration from "../gameModes/gameConfiguration.ts";
 import {generateNumbers} from "../generateNumbers.ts";
 
 const player1: Player = {
-
     username: 'test-user',
     email: 'testing@universe.org',
     password: 'password',
@@ -97,7 +96,6 @@ let guess = () => {
 }
 
 let game = easygame.startGame()
-game('1234').then(data => console.log(data))
 
 
 
