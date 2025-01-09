@@ -2,7 +2,6 @@ import {sessionCollection, userCollection} from "./database.ts";
 import Player from "../game-components/player.ts";
 import bcrypt from "bcrypt";
 import {ObjectId} from "mongodb";
-
 export default class SessionClient {
     addSessionToDb = async (obj: Object) => {
         try {

@@ -1,6 +1,4 @@
-import {Difficulty} from "../game-components/difficulties.ts";
 import Player from '../game-components/player.ts'
-
 export interface Game {
     player: Player | Player[]
     // persisted
