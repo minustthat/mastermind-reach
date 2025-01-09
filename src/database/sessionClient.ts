@@ -1,5 +1,5 @@
 import {sessionCollection,userCollection} from "./database.ts";
-import {Player} from "../gameComponents/player.ts";
+import {Player} from "../game-components/player.ts";
 import bcrypt from "bcrypt";
 
 export default class SessionClient{
@@ -13,18 +13,19 @@ export default class SessionClient{
         }
     }
 
-    addUserToDb = async (obj: Player) => {
+    addUserToDb = async (player: Player) => {
         try{
-            await userCollection.insertOne(obj)
-            return `Object inserted: ${JSON.stringify(obj)}`
+            await userCollection.insertOne(player)
+            return `Object inserted: ${JSON.stringify(player)}`
         }
         catch(err){
             console.log(`Error adding User to DB: ${err}`)
         }
     }
 
-    validateUser = async(username: string, pwd: string): Promise<boolean> => {
+    validateUser = async(username: string, pwd: string)  => {
         let exists: boolean = false
+        let user = {}
         try{
             const user = await userCollection.findOne({username: username})
             if(user == null){
@@ -50,7 +51,7 @@ export default class SessionClient{
         }
         console.log(`name: ${username} password: ${pwd}`)
         console.log(exists)
-        return exists
+        return user
     }
     // if all goes well here, send the cookie.
 

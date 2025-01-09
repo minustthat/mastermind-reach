@@ -1,5 +1,5 @@
-import SinglePlayerGameConfiguration from "./gameConfiguration.ts";
-import {Player} from "../gameComponents/player.ts";
+import SinglePlayerGameConfiguration from "../game-creation/gameConfiguration.ts";
+import {Player} from "../game-components/player.ts";
 
 export default class EasyGame extends SinglePlayerGameConfiguration{
     override player: Player

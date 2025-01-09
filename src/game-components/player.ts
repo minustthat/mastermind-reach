@@ -39,8 +39,8 @@ export const loginPlayer = async (name: string, password: string)=> {
          const client = new SessionClient()
 
     try{
-        const isValid: boolean  = await client.validateUser(name,password)
-        if(!isValid) {
+        const isValid: object  = await client.validateUser(name,password)
+        if(Object.keys(isValid).length == 0) {
             return false
         }
 
