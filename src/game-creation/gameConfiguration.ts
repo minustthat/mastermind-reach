@@ -1,5 +1,5 @@
 
-import Player from "../game-components/player.ts";
+import {Player} from "../game-components/player.ts";
 import {Game} from "./game.ts";
 import EventEmitter from "node:events";
 import {generateNumbers} from "../game-components/generateNumbers.ts";
@@ -11,6 +11,7 @@ export default class SinglePlayerGameConfiguration extends EventEmitter implemen
     hintsEnabled: boolean = true
     result: string = ''
     difficulty: string = ''
+    guessCount: number = 0
     constructor(player: Player){
         super()
         this.player = player
