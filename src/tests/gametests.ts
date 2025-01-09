@@ -1,7 +1,7 @@
-import {Player} from "../gameComponents/player.ts";
-import {gameFactory} from "../gameModes/gameFactory.ts";
-import SinglePlayerGameConfiguration from "../gameModes/gameConfiguration.ts";
-import {generateNumbers} from "../generateNumbers.ts";
+import {Player} from "../game-components/player.ts";
+import {gameFactory} from "../game-creation/gameFactory.ts";
+import SinglePlayerGameConfiguration from "../game-creation/gameConfiguration.ts";
+import {generateNumbers} from "../game-components/generateNumbers.ts";
 
 const player1: Player = {
     username: 'test-user',

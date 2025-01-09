@@ -1,9 +1,8 @@
 
-import {Player} from "../gameComponents/player.ts";
+import {Player} from "../game-components/player.ts";
 import {Game} from "./game.ts";
 import EventEmitter from "node:events";
-import {generateNumbers} from "../generateNumbers.ts";
-import {Memoize} from "typescript-memoize";
+import {generateNumbers} from "../game-components/generateNumbers.ts";
 
 export default class SinglePlayerGameConfiguration extends EventEmitter implements Game {
     player: Player
