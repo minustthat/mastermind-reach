@@ -1,5 +1,6 @@
 
-import {Player} from "../game-components/player.ts";
+import Player from "../game-components/player.ts";
+
 import {Game} from "./game.ts";
 import EventEmitter from "node:events";
 import {generateNumbers} from "../game-components/generateNumbers.ts";
@@ -11,11 +12,11 @@ export default class SinglePlayerGameConfiguration extends EventEmitter implemen
     hintsEnabled: boolean = true
     result: string = ''
     difficulty: string = ''
-    guessCount: number = 0
-    constructor(player: Player){
+    constructor(player: Player) {
         super()
         this.player = player
     }
+
     generateResult(): object {
         return {
             player: this.player.username,
@@ -34,44 +35,42 @@ export default class SinglePlayerGameConfiguration extends EventEmitter implemen
         // awaits the result, to return a definite answer
         const randomNumberArray: string[] = randomNumber ? Array.from(randomNumber) : []
         // makes an array for the returned result, and returns an empty array to avoid null exceptions
-        return  randomNumberArray.filter(item => item !== '\n');
+        return randomNumberArray.filter(item => item !== '\n');
         // returns the array. Without this filter, the array would have line breaks between each character since the api responds with columns.
     }
-    startGame =  () => {
+    startGame = () => {
         let attemptCount: number = 0
         // keeps track of the number of tries, if this number exceeds 10 then the game is over and the user has lost.
         let targetNumber = this.generateTargetNumber()
         // returns the result of the api call to a variable
         let guess = async (num: string) => {
-                let feedback = ''
+            let feedback = ''
             // must be returned, so I left it out of the scope of the try catch block.
-                try {
-                    attemptCount++
-                    // increment attempt counter
-                    const guessArray: string[] = Array.from(num)
-                    //make array from the user's argument.
-                    // @ts-ignore
-                    const target = await targetNumber
-                    const matchingNumberArray = target.filter(i => guessArray.includes(i))
-                    // filter out each number inside of the target array that does not also appear in the guess array
-                    if (matchingNumberArray.length == guessArray.length) {
-                        this.result = 'won'
-                        this.emit('win')
-                        return "you win!"
-                    }
-                    if (attemptCount > 10) {
-                        this.emit('loss')
-                        return "Game over!"
-                    }
-                    feedback  = `You have ${matchingNumberArray.length} numbers correct!`
-                    // the number of matches
-                } catch (err) {
-                    console.log(`Err: ${err}`)
+            try {
+                attemptCount++
+                // increment attempt counter
+                const guessArray: string[] = Array.from(num)
+                //make array from the user's argument.
+                // @ts-ignore
+                const target = await targetNumber
+                const matchingNumberArray = target.filter(i => guessArray.includes(i))
+                // filter out each number inside of the target array that does not also appear in the guess array
+                if (matchingNumberArray.length == guessArray.length) {
+                    this.result = 'won'
+                    this.emit('win')
+                    return "you win!"
                 }
-                return `${feedback}`
+                if (attemptCount > 10) {
+                    this.emit('loss')
+                    return "Game over!"
+                }
+                feedback = `You have ${matchingNumberArray.length} numbers correct!`
+                // the number of matches
+            } catch (err) {
+                console.log(`Err: ${err}`)
             }
-            return guess
+            return `${feedback}`
         }
+        return guess
     }
-
-
+}
