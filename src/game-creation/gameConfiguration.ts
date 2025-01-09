@@ -4,7 +4,6 @@ import Player from "../game-components/player.ts";
 import {Game} from "./game.ts";
 import EventEmitter from "node:events";
 import {generateNumbers} from "../game-components/generateNumbers.ts";
-
 export default class SinglePlayerGameConfiguration extends EventEmitter implements Game {
     player: Player
     date: string = Date.now().toString()
@@ -16,7 +15,6 @@ export default class SinglePlayerGameConfiguration extends EventEmitter implemen
         super()
         this.player = player
     }
-
     generateResult(): object {
         return {
             player: this.player.username,
@@ -27,7 +25,6 @@ export default class SinglePlayerGameConfiguration extends EventEmitter implemen
         }
         // returns an object of the game so I can store results to a database.
     }
-
     generateTargetNumber = async () => {
         const apiCall = generateNumbers(this.difficulty)
         // calls the api

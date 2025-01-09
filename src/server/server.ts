@@ -120,7 +120,6 @@ app.get('/setup', checkAuth, async (req: Request, res: Response) => {
     res.send(`
         <form action = "/setup" method="POST">
         <label for="difficulty"> Please Select difficulty </label>
-       
         <input type = "radio" id="easy" name="difficulty" value = "easy">
         <label for="easy"> easy </label>
         <input type = "radio" id="medium" name="difficulty" value = "medium">
