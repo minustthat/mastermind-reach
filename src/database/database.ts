@@ -16,7 +16,7 @@ export const sessionCollection: Collection = database.collection('sessions')
 export const userCollection: Collection = database.collection('users')
 
 export const connectToDatabase = async() => {
-    try {``
+    try {
         await client.connect()
         console.log("Connected!")
     }
