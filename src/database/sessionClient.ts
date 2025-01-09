@@ -1,7 +1,8 @@
+
 import {sessionCollection, userCollection} from "./database.ts";
 import Player from "../game-components/player.ts";
+
 import bcrypt from "bcrypt";
-import {ObjectId} from "mongodb";
 
 export default class SessionClient {
     addSessionToDb = async (obj: Object) => {
@@ -46,11 +47,14 @@ export default class SessionClient {
             // @ts-ignore
         } catch (err) {
             console.log(`Incorrect information: ${err}`)
+            return false
         }
         console.log(`name: ${username} password: ${pwd}`)
-        return id
+        console.log(exists)
+        return user
     }
     // if all goes well here, send the cookie.
+
     checkForExistingUser = async (name: string, emailAddress: string) => {
         try {
             const usernameExists = await userCollection.findOne({username: name})
@@ -112,4 +116,5 @@ export default class SessionClient {
         }
         return player
     }
+
 }

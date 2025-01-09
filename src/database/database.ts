@@ -15,6 +15,7 @@ const client = new MongoClient(DB_URI, {
 export const database: Db = client.db('mastermind')
 export const sessionCollection: Collection = database.collection('sessions')
 export const userCollection: Collection = database.collection('users')
+
 export const connectToDatabase = async () => {
     try {
         await client.connect()
