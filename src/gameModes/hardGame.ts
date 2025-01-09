@@ -1,7 +1,7 @@
 import SinglePlayerGameConfiguration from "./gameConfiguration.ts";
 import {Player} from "../gameComponents/player.ts";
 
-class HardGame extends SinglePlayerGameConfiguration{
+export default class HardGame extends SinglePlayerGameConfiguration{
     override player: Player
     override difficulty: string = 'hard';
     override hints: string[] = []

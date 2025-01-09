@@ -2,54 +2,21 @@
 import {Player} from "../gameComponents/player.ts";
 import {Game} from "./game.ts";
 import EventEmitter from "node:events";
+import {generateNumbers} from "../generateNumbers.ts";
+import {Memoize} from "typescript-memoize";
 
 export default class SinglePlayerGameConfiguration extends EventEmitter implements Game {
     player: Player
     date: string = Date.now().toString()
     hints: string[] = []
     hintsEnabled: boolean = true
-    guessCount: number = 0
     result: string = ''
     difficulty: string = ''
-
+    guessCount: number = 0
     constructor(player: Player){
         super()
         this.player = player
     }
-
-    async guess(guess: string, objective: Promise<string>): Promise<string>{
-        let message = ''
-        let feedback: string | null = ''
-        const objAsArray = Array.from( await objective)
-        // array from objective so I can filter through it. If I were to do this with strings, they would have to be in the same order.
-        const guessAsArray = Array.from(guess)
-        // array from the guess entered, so I can compare the guess array to the objective array.
-        let filteredArray = objAsArray.filter(i => {
-            return guessAsArray.includes(i)
-        })
-        // the number of matches
-        if(filteredArray.length == guessAsArray.length){
-            message = 'You win!'
-            feedback = `You have ${objAsArray.length} numbers correct!`
-            // if the length of the filtered array is the same as the length of the guess array, then they are a perfect match: which leads to a victory!
-        }
-        this.guessCount += 1
-        feedback = `You have ${filteredArray.length} numbers correct!`
-        // if they are not the same length, then increment the guesscount by one, and tell the user how many numbers they guessed correctly.
-
-        if (this.guessCount > 10) {
-            message = 'Try again?'
-            this.result = 'loss'
-            this.generateResult()
-        }
-        // we need to find a way to keep track of the guessCount, so we can log a loss once it gets to that point. How???
-        console.log(objAsArray)
-        console.log(guessAsArray)
-        console.log(filteredArray)
-        // if the guess count exceeds 10, the game is a loss.
-        return `${message} ${feedback}`
-    }
-
     generateResult(): object {
         return {
             player: this.player.username,
@@ -58,8 +25,60 @@ export default class SinglePlayerGameConfiguration extends EventEmitter implemen
             difficulty: this.difficulty,
             result: this.result
         }
+        // returns an object of the game so I can store results to a database.
     }
 
+    generateTargetNumber = async () => {
+        const apiCall = generateNumbers(this.difficulty)
+        // calls the api
+        const randomNumber = await apiCall
+        // awaits the result, to return a definite answer
+        const randomNumberArray: string[] = randomNumber ? Array.from(randomNumber) : []
+        // makes an array for the returned result, and returns an empty array to avoid null exceptions
+        return  randomNumberArray.filter(item => item !== '\n');
+        // returns the array. Without this filter, the array would have line breaks between each character since the api responds with columns.
+    }
+    startGame =  () => {
+        let attemptCount: number = 0
+        // keeps track of the number of tries, if this number exceeds 10 then the game is over and the user has lost.
+        let targetNumber = this.generateTargetNumber()
+        // returns the result of the api call to a variable
+        let guess = async (num: string) => {
+                let feedback = ''
+            // must be returned, so I left it out of the scope of the try catch block.
+                try {
+                    attemptCount++
+                    // increment attempt counter
+                    const guessArray: string[] = Array.from(num)
+                    //make array from the user's argument.
+                    // @ts-ignore
+                    const target = await targetNumber
+                    const matchingNumberArray = target.filter(i => guessArray.includes(i))
+                    // filter out each number inside of the target array that does not also appear in the guess array
+                    if (matchingNumberArray.length == guessArray.length) {
+                        this.result = 'won'
+                        this.emit('win')
+                        return "you win!"
+                    }
+                    if (attemptCount > 10) {
+                        this.emit('loss')
+                        return "Game over!"
+                    }
+                    feedback  = `You have ${matchingNumberArray.length} numbers correct!`
+                    // the number of matches
+                } catch (err) {
+                    console.log(`Err: ${err}`)
+                }
+                return `${feedback}`
+            }
+            return guess
+        }
+    }
+        /*
+    Goals:
+    keep track of guess count
+    compare guess to objective
+    return feedback
+    */
+// lets make the guess method only execute guesses, and have a different method for calling the api.
 
-
-}

@@ -16,6 +16,5 @@ export interface Game {
     difficulty: string
     // the difficulty of the game, which will determine how many digits the user
     // guess.
-    guess(guess: string, objective: Promise<string>): void
     generateResult(): object
 }
