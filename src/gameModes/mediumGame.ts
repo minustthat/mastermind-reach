@@ -1,7 +1,7 @@
 import SinglePlayerGameConfiguration from "./gameConfiguration.ts";
 import {Player} from "../gameComponents/player.ts";
 
-class MediumGame extends SinglePlayerGameConfiguration{
+export default class MediumGame extends SinglePlayerGameConfiguration{
     override player: Player
     override difficulty: string = 'medium';
     override hints: string[] = []
