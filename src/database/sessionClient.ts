@@ -14,6 +14,7 @@ export default class SessionClient {
     addUserToDb = async (player: Player) => {
         try {
             await userCollection.insertOne(player)
+            console.log(JSON.stringify(player))
             return `Object inserted: ${JSON.stringify(player)}`
         } catch (err) {
             console.log(`Error adding User to DB: ${err}`)
