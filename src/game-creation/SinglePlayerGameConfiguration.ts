@@ -58,17 +58,12 @@ export default class SinglePlayerGameConfiguration extends EventEmitter implemen
                 if(guessArray === targetArray){
                     this.result = 'won'
                     this.emit('win')
-                    process.exit()
                     // just create an event for this, and when when is done send a message to the browser and save to db.
                 }
-
-                while(attemptCount <= 10){
-                    feedback = this.findNumberAndLocation(targetArray, guessArray)
-                }
+                feedback = this.findNumberAndLocation(targetArray, guessArray)
                 if(attemptCount > 10){
                     this.result = 'loss'
                     this.emit('loss')
-                    process.exit()
                 }
                 // the number of matches
             } catch (err) {
