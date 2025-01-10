@@ -22,7 +22,7 @@ gameTest('1234').then(message => console.log(message))
 gameTest('1234').then(message => console.log(message))
 gameTest('1234').then(message => console.log(message))
 gameTest('1234').then(message => console.log(message))
-gameTest('1234').then(message => console.log(message))
+
 
 
 easygame.on('loss',() => {
