@@ -5,7 +5,8 @@ declare module "express-session" {
     interface SessionData {
         isAuth: boolean
         userId?: ObjectId
-        game: SinglePlayerGameConfiguration
+        game?: SinglePlayerGameConfiguration
+        destroy: () => void
     }
 }
 
@@ -26,7 +27,7 @@ import {connectToDatabase} from "../database/database.ts";
 // @ts-ignore
 import connectMongo from 'connect-mongodb-session'
 import {ObjectId} from "mongodb";
-import SinglePlayerGameConfiguration from "../game-creation/gameConfiguration.ts";
+import SinglePlayerGameConfiguration from "../game-creation/SinglePlayerGameConfiguration.ts";
 import {gameFactory} from "../game-creation/gameFactory.ts";
 
 const sessionClient = new SessionClient()
@@ -75,7 +76,7 @@ app.post('/register', express.urlencoded({extended: true}), (req: Request, res: 
         });
         const {username, email, password} = req.body
         sessionClient.registerPlayer(username, email, password).catch(err => console.log(`Err: ${err}`))
-        res.redirect('/register')
+        res.redirect('/login')
     } catch (err: unknown) {
         console.log(err)
     }
@@ -102,8 +103,8 @@ app.post('/login', express.urlencoded({extended: true}), async (req: Request, re
         if (!user) {
             res.redirect('/login')
         }
-        req.session.isAuth = true
         req.session.userId = user
+        req.session.isAuth = true
         res.redirect('/setup')
         //redirect to manage state
         console.log(req.session.userId)
@@ -111,12 +112,23 @@ app.post('/login', express.urlencoded({extended: true}), async (req: Request, re
         console.log(`err:${err}`)
     }
 })
+app.get('/logout', (req,res) => {
+    res.status(200).set({'Content-Type': 'text/html'}).send(`
+        <form action = "/logout" method="POST"> 
+        <input type="submit">  
+        </form>
+    `)
+})
+app.post('/logout', (req,res) => {
+    req.session.destroy()
+    console.log(req.session.userId)
+})
 //</editor-fold>
 
 //<editor-fold desc = "game settings and setup">
 
 // set difficulty
-app.get('/setup', checkAuth, async (req: Request, res: Response) => {
+app.get('/setup', async (req: Request, res: Response) => {
     res.send(`
         <form action = "/setup" method="POST">
         <label for="difficulty"> Please Select difficulty </label>
@@ -135,34 +147,34 @@ app.post('/setup', express.urlencoded({extended: true}), async (req: Request, re
     const user = await sessionClient.returnUserFromId(req.session.userId)
     const newgame: SinglePlayerGameConfiguration = gameFactory(user, req.body.difficulty)
     req.session.game = newgame
-    console.log(newgame)
 })
 //</editor-fold>
 // will route to a specific endpoint based on difficulty, and or multiplayer.
 //<editor-fold desc = "Begin GamePlay">
 
 // play game
-app.get('/play', express.urlencoded({extended: true}), (req: Request, res: Response) => {
+app.get('/play', (req: Request, res: Response) => {
     res.send(`
-                <form action = "/game" method="POST">
+                <form action = "/play" method="POST">
                 <input type="text" id="attempt" name="attempt" />
                 <input type="submit"> 
                 </form>
 `)
-    app.post('/game', express.urlencoded({extended: true}), async (req, res) => {
+    app.post('/play', express.urlencoded({extended: true}), async (req, res) => {
         try {
             const user = await sessionClient.returnUserFromId(req.session.userId)
-            const game: SinglePlayerGameConfiguration = req.session.game ? req.session.game : gameFactory(user, 'easy')
-            console.log(game)
-            const guess = game.startGame()
-            if (guess) {
-                if (guess) {
-                    guess(req.body.attempt).then(data => console.log(data))
-                }
+            if (req.session.game) {
+                const game: SinglePlayerGameConfiguration = req.session.game
+                console.log(game)
+                // @ts-ignore
+
+            } else {
+                console.log(`no req`)
             }
-        } catch (err) {
-            console.log(err)
+        } catch(err){
+            console.log(`Error at /play: ${err}`)
         }
+
     })
 })
 //</editor-fold>
