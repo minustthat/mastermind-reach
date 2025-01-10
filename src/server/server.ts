@@ -1,21 +1,4 @@
-import {PlayerEmitter} from "../events.ts";
 import SessionClient from '../database/sessionClient.ts'
-
-declare module "express-session" {
-    interface SessionData {
-        isAuth: boolean
-        userId?: ObjectId
-        game?: SinglePlayerGameConfiguration
-        destroy: () => void
-    }
-}
-
-let checkAuth = (req: Request, res: Response, next: NextFunction) => {
-    if (req.session.isAuth) {
-        return next()
-    }
-    res.redirect('/login')
-}
 /* this declaration is needed in order to set the isAuth property on Session to true. Without it, typescript is unable to find this
 property.
  */
@@ -29,6 +12,25 @@ import connectMongo from 'connect-mongodb-session'
 import {ObjectId} from "mongodb";
 import SinglePlayerGameConfiguration from "../game-creation/SinglePlayerGameConfiguration.ts";
 import {gameFactory} from "../game-creation/gameFactory.ts";
+import Player from "../game-components/player.ts";
+
+declare module "express-session" {
+    interface SessionData {
+        isAuth: boolean
+        userId?: ObjectId
+        game?: SinglePlayerGameConfiguration
+        destroy: () => void
+        user: Player
+        difficulty?: string
+    }
+}
+
+let checkAuth = (req: Request, res: Response, next: NextFunction) => {
+    if (req.session.isAuth) {
+        return next()
+    }
+    res.redirect('/login')
+}
 
 const sessionClient = new SessionClient()
 const app = express()
@@ -46,7 +48,10 @@ app.use(session({
     secret: 'reach-mastermind',
     resave: false,
     saveUninitialized: false,
-    store: store
+    store: store,
+    cookie:{
+        secure: false
+    }
 }))
 app.use(express.json());
 //</editor-fold>
@@ -104,6 +109,7 @@ app.post('/login', express.urlencoded({extended: true}), async (req: Request, re
             res.redirect('/login')
         }
         req.session.userId = user
+        req.session.user =  await sessionClient.returnUserFromId(user)
         req.session.isAuth = true
         res.redirect('/setup')
         //redirect to manage state
@@ -121,7 +127,7 @@ app.get('/logout', (req,res) => {
 })
 app.post('/logout', (req,res) => {
     req.session.destroy()
-    console.log(req.session.userId)
+
 })
 //</editor-fold>
 
@@ -145,8 +151,10 @@ app.get('/setup', async (req: Request, res: Response) => {
 app.post('/setup', express.urlencoded({extended: true}), async (req: Request, res: Response) => {
     res.status(200).redirect('/play')
     const user = await sessionClient.returnUserFromId(req.session.userId)
-    const newgame: SinglePlayerGameConfiguration = gameFactory(user, req.body.difficulty)
-    req.session.game = newgame
+    req.session.user = user
+    req.session.isAuth = true
+    req.session.difficulty = req.body.difficulty
+    console.log(req.session.game)
 })
 //</editor-fold>
 // will route to a specific endpoint based on difficulty, and or multiplayer.
@@ -162,15 +170,13 @@ app.get('/play', (req: Request, res: Response) => {
 `)
     app.post('/play', express.urlencoded({extended: true}), async (req, res) => {
         try {
-            const user = await sessionClient.returnUserFromId(req.session.userId)
-            if (req.session.game) {
-                const game: SinglePlayerGameConfiguration = req.session.game
-                console.log(game)
-                // @ts-ignore
 
-            } else {
-                console.log(`no req`)
-            }
+                req.session.isAuth = true
+                const game: SinglePlayerGameConfiguration | undefined = gameFactory(req.session.user ?? await sessionClient.returnUserFromId(req.session.userId) ,req.session.difficulty ?? 'easy')
+                const guess = game.startGame()
+                res.send(await guess(req.body.attempt))
+                console.log(await guess(req.body.attempt))
+                // @ts-ignore
         } catch(err){
             console.log(`Error at /play: ${err}`)
         }
