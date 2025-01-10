@@ -174,7 +174,7 @@ app.get('/play', (req: Request, res: Response) => {
                 req.session.isAuth = true
                 const game: SinglePlayerGameConfiguration | undefined = gameFactory(req.session.user ?? await sessionClient.returnUserFromId(req.session.userId) ,req.session.difficulty ?? 'easy')
                 const guess = game.startGame()
-                res.send(await guess(req.body.attempt))
+                res.send(`<p>await guess(req.body.attempt)</p>`)
                 console.log(await guess(req.body.attempt))
                 // @ts-ignore
         } catch(err){
