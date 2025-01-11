@@ -29,8 +29,6 @@ declare module "express-session" {
 }
 const app = express()
 connectToDatabase().catch(err => console.log(err))
-const httpServer = http.createServer(app)
-const socketServer = new WebSocket.Server({server: httpServer})
 const sessionClient = new SessionClient()
 const MongoDBStore = connectMongo(session)
 const store = new MongoDBStore(
@@ -138,8 +136,6 @@ app.post('/setup', express.urlencoded({extended: true}), async (req: Request, re
         // makes an array for the returned result, and returns an empty array to avoid null exceptions
         return randomNumberArray.filter(item => item !== '\n')
     }
-    req.session.target = generateTargetNumber ?? []
-    req.session.attemptCount = 0
     console.log(req.session.difficulty)
 })
 //</editor-fold>
@@ -153,7 +149,6 @@ app.get('/play', (req: Request, res: Response) => {
 
     // @ts-ignore
 app.post('/play', express.urlencoded({extended: true}), async (req, res) => {
-    req.session.attemptCount = 0
     try {
         let findNumberAndLocation = (objective: string[], guess: string[]) => {
             let locationCounter: number = 0
