@@ -61,6 +61,8 @@ export default class SinglePlayerGameConfiguration extends EventEmitter implemen
                     // just create an event for this, and when when is done send a message to the browser and save to db.
                 }
                 feedback = this.findNumberAndLocation(targetArray, guessArray)
+                console.log(targetArray)
+                console.log(attemptCount)
                 if(attemptCount > 10){
                     this.result = 'loss'
                     this.emit('loss')

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Board</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<form action = "/play" method="POST" id="guess-field">
+  <label for="attempt"> Guess Here: </label><input type="text" id="attempt" name="attempt" />
+  <button id ="play-button" class = "flow-buttons"> Guess </button>
+</form>
+<div id="responseContainer"></div>
+<script>
+  let form = document.getElementById('guess-field')
+  let button = document.getElementById('play-button')
+  const formData = new FormData(form)
+  button.addEventListener('submit', (event) => {
+    event.preventDefault();
+
+    fetch('/play', {
+      method: 'POST',
+      body: formData
+    })
+            .then(response => response.json())
+            .then(data => {
+              const responseContainer = document.getElementById('responseContainer');
+
+              if (responseContainer) {
+                // Create a new <p> tag
+                const p = document.createElement('p');
+                p.textContent = data.message;  // Assuming 'message' is the field in your response JSON
+
+                // Append the <p> tag to the container
+                responseContainer.appendChild(p);
+              }
+            })
+            .catch(error => {
+              console.error('Error:', error);
+              alert('Play failed');
+            });
+  });
+</script>
+</body>
+</html>
