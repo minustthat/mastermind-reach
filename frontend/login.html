@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Register</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+<form action = "/login" id = "login-form" method="POST">
+  <label for="username">Username:</label>
+  <input type="text" id="username" name="username" required><br>
+
+  <label for="password">Password:</label>
+  <input type="password" id="password" name="password" required><br>
+
+  <button id = "register-button" class = "flow-buttons"> Register </button>
+</form>
+<script>
+  let form = document.getElementById('login-form')
+  let button = document.getElementById('register-button')
+  const formData = new FormData(form)
+  button.addEventListener('submit', (event) => {
+    event.preventDefault();
+
+    fetch('/login', {
+      method: 'POST',
+      body: formData
+    })
+            .then(response => response.json())
+            .then(data => {
+              console.log('Success:', data);
+              alert('Login successful!');
+            })
+            .catch(error => {
+              console.error('Error:', error);
+              alert('Login failed');
+            });
+  });
+</script>
+</body>
+</html>

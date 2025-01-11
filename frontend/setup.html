@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+`
+<form action = "/setup" method="POST" id="difficulty">
+  <label for="difficulty"> Please Select difficulty </label>
+  <input type = "radio" id="easy" name="difficulty" value = "easy">
+  <label for="easy"> easy </label>
+  <input type = "radio" id="medium" name="difficulty" value = "medium">
+  <label for="medium"> medium </label>
+  <input type = "radio" id="hard" name="difficulty" value = "hard">
+  <label for="hard"> hard </label>
+  <button id="playButton"> Play </button>
+</form>
+<script>
+  let form = document.getElementById('difficulty')
+  let button = document.getElementById('playButton')
+  const formData = new FormData(form)
+  document.getElementById('playButton').addEventListener('submit', (event) => {
+    event.preventDefault();
+
+    fetch('/setup', {
+      method: 'POST',
+      body: formData
+    })
+            .then(response => response.json())
+            .then(data => {
+              console.log('Success:', data);
+              alert('Setup successful!');
+            })
+            .catch(error => {
+              console.error('Error:', error);
+              alert('Setup failed');
+            });
+  });
+</script>
+</body>
+</html>
