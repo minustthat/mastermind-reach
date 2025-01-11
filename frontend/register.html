@@ -32,13 +32,8 @@
       body: formData
     })
             .then(response => response.json())
-            .then(data => {
-              console.log('Success:', data);
-              alert('Login successful!');
-            })
-            .catch(error => {
-              console.error('Error:', error);
-              alert('Login failed');
+            .then(data => {console.log(data)})
+            .catch(error => {console.error(error);
             });
   });
 </script>

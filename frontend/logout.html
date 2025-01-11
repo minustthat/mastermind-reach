@@ -20,12 +20,10 @@
     })
         .then(response => response.json())
         .then(data => {
-        console.log('Success:', data);
-        alert('Logout successful!');
+        console.log(data);
     })
         .catch(error => {
-        console.error('Error:', error);
-        alert('Logout failed');
+        console.error(error);
     });
     });
 </script>
