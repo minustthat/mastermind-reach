@@ -12,7 +12,6 @@ export default class SinglePlayerGameConfiguration extends EventEmitter implemen
     result: string = ''
     difficulty: string = ''
     guesses: string[] = []
-
     constructor(player: Player) {
         super()
         this.player = player
