@@ -1,19 +1,21 @@
 import SessionClient from '../database/sessionClient.ts'
-/* this declaration is needed in order to set the isAuth property on Session to true. Without it, typescript is unable to find this
-property.
- */
+
 //<editor-fold desc = "imported packages, database connection, and middleware.">
 import express, {NextFunction, Request, Response} from 'express'
 import cors from 'cors'
 import session from 'express-session'
 import {connectToDatabase} from "../database/database.ts";
-// @ts-ignore
+import path from 'node:path'
+
 import connectMongo from 'connect-mongodb-session'
 import {ObjectId} from "mongodb";
 import SinglePlayerGameConfiguration from "../game-creation/SinglePlayerGameConfiguration.ts";
 import {gameFactory} from "../game-creation/gameFactory.ts";
 import Player from "../game-components/player.ts";
-
+import {generateNumbers} from "../game-components/generateNumbers.ts";
+/* this declaration is needed in order to set the isAuth property on Session to true. Without it, typescript is unable to find this
+property.
+ */
 declare module "express-session" {
     interface SessionData {
         isAuth: boolean
@@ -22,21 +24,14 @@ declare module "express-session" {
         destroy: () => void
         user: Player
         difficulty?: string
+        guesses?: string[]
     }
 }
-
-let checkAuth = (req: Request, res: Response, next: NextFunction) => {
-    if (req.session.isAuth) {
-        return next()
-    }
-    res.redirect('/login')
-}
-
-const sessionClient = new SessionClient()
 const app = express()
 connectToDatabase().catch(err => console.log(err))
-
-app.use(cors())
+const httpServer = http.createServer(app)
+const socketServer = new WebSocket.Server({server: httpServer})
+const sessionClient = new SessionClient()
 const MongoDBStore = connectMongo(session)
 const store = new MongoDBStore(
     {
@@ -44,6 +39,10 @@ const store = new MongoDBStore(
         collection: 'urlsessions'
     }
 )
+const target = generateNumbers('easy')
+let counter = 0
+const frontendPath: string = path.resolve(__dirname, '../../frontend');
+app.use(cors())
 app.use(session({
     secret: 'reach-mastermind',
     resave: false,
@@ -54,80 +53,67 @@ app.use(session({
     }
 }))
 app.use(express.json());
+app.use(express.static(frontendPath));
 //</editor-fold>
 
 //<editor-fold desc = "registration">
 app.get('/register', (req: Request, res: Response): void => {
-    res.status(200).set({'Content-Type': 'text/html'}).send(`
-        <form action = "/register" method="POST"> 
-        <label for="username"> Username: </label>
-        <input type = "text" id="username" name="username"> 
-        
-        <label for="email"> Email Address: </label>
-        <input type = "email" id="email" name="email"> 
-       
-        <label for="password"> Password : </label>
-        <input type = "password" id="password" name="password" min="7"> 
-        <input type="submit">  
-        </form>
-    `)
+    res.status(200).sendFile('/Users/nolimit/repos/mastermind-reach/frontend/register.html')
 })
-app.post('/register', express.urlencoded({extended: true}), (req: Request, res: Response): void => {
+app.post('/register', express.urlencoded({extended: true}), async(req: Request, res: Response) => {
     try {
         res.status(201)
-        req.setTimeout(5000, () => {
+        req.setTimeout(5000, async () => {
             console.log('Request timed out');
             res.status(408).send('Request Timeout');
         });
         const {username, email, password} = req.body
-        sessionClient.registerPlayer(username, email, password).catch(err => console.log(`Err: ${err}`))
+        await sessionClient.registerPlayer(username, email, password).catch(err => console.log(`Err: ${err}`))
         res.redirect('/login')
     } catch (err: unknown) {
         console.log(err)
+        res.redirect('/register')
     }
 })
 //</editor-fold>
 
 //<editor-fold desc = "login"
 app.get('/login', (req, res) => {
-    res.status(200).set({'Content-Type': 'text/html'}).send(`
-        <form action = "/login" method="POST"> 
-        <label for="username"> Username: </label>
-        <input type = "text" id="username" name="username"> 
-        
-        <label for="password"> Password : </label>
-        <input type = "text" id="password" name="password"> 
-        <input type="submit">  
-        </form>
-    `)
+    res.status(200).set({'Content-Type': 'text/html'}).sendFile('/Users/nolimit/repos/mastermind-reach/frontend/login.html')
 })
 app.post('/login', express.urlencoded({extended: true}), async (req: Request, res: Response) => {
     try {
         const {username, password} = req.body
-        const user = await sessionClient.validateUser(username, password)
+        const user: ObjectId | undefined = await sessionClient.validateUser(username, password)
         if (!user) {
-            res.redirect('/login')
+            console.log('no user.')
         }
+        // @ts-ignore
         req.session.userId = user
-        req.session.user =  await sessionClient.returnUserFromId(user)
         req.session.isAuth = true
+        console.log(req.session.userId)
         res.redirect('/setup')
         //redirect to manage state
-        console.log(req.session.userId)
-    } catch (err) {
+    }
+    catch (err) {
         console.log(`err:${err}`)
     }
 })
 app.get('/logout', (req,res) => {
-    res.status(200).set({'Content-Type': 'text/html'}).send(`
-        <form action = "/logout" method="POST"> 
-        <input type="submit">  
-        </form>
-    `)
+    res.status(200).sendFile('/Users/nolimit/repos/mastermind-reach/frontend/logout.html')
 })
 app.post('/logout', (req,res) => {
-    req.session.destroy()
-
+    try{
+        req.session.destroy((err) => {
+            if (err) {
+                console.log(err)
+            }
+        })
+        res.end()
+    }
+    catch(err){
+        console.log(err)
+    }
 })
 //</editor-fold>
 
@@ -135,18 +121,7 @@ app.post('/logout', (req,res) => {
 
 // set difficulty
 app.get('/setup', async (req: Request, res: Response) => {
-    res.send(`
-        <form action = "/setup" method="POST">
-        <label for="difficulty"> Please Select difficulty </label>
-        <input type = "radio" id="easy" name="difficulty" value = "easy">
-        <label for="easy"> easy </label>
-        <input type = "radio" id="medium" name="difficulty" value = "medium">
-        <label for="medium"> medium </label>
-        <input type = "radio" id="hard" name="difficulty" value = "hard">
-        <label for="hard"> hard </label>
-        <input type="submit">
-        </form>
-   `)
+    res.sendFile('/Users/nolimit/repos/mastermind-reach/frontend/setup.html')
 })
 app.post('/setup', express.urlencoded({extended: true}), async (req: Request, res: Response) => {
     res.status(200).redirect('/play')
@@ -154,7 +129,18 @@ app.post('/setup', express.urlencoded({extended: true}), async (req: Request, re
     req.session.user = user
     req.session.isAuth = true
     req.session.difficulty = req.body.difficulty
-    console.log(req.session.game)
+    const generateTargetNumber = async () => {
+        const apiCall = generateNumbers(req.session.difficulty ?? 'easy')
+        // calls the api
+        const randomNumber = await apiCall ?? ''
+        // awaits the result, to return a definite answer
+        const randomNumberArray: string[] = Array.from(randomNumber)
+        // makes an array for the returned result, and returns an empty array to avoid null exceptions
+        return randomNumberArray.filter(item => item !== '\n')
+    }
+    req.session.target = generateTargetNumber ?? []
+    req.session.attemptCount = 0
+    console.log(req.session.difficulty)
 })
 //</editor-fold>
 // will route to a specific endpoint based on difficulty, and or multiplayer.
@@ -162,28 +148,73 @@ app.post('/setup', express.urlencoded({extended: true}), async (req: Request, re
 
 // play game
 app.get('/play', (req: Request, res: Response) => {
-    res.send(`
-                <form action = "/play" method="POST">
-                <input type="text" id="attempt" name="attempt" />
-                <input type="submit"> 
-                </form>
-`)
-    app.post('/play', express.urlencoded({extended: true}), async (req, res) => {
-        try {
-
-                req.session.isAuth = true
-                const game: SinglePlayerGameConfiguration | undefined = gameFactory(req.session.user ?? await sessionClient.returnUserFromId(req.session.userId) ,req.session.difficulty ?? 'easy')
-                const guess = game.startGame()
-                res.send(`<p>await guess(req.body.attempt)</p>`)
-                console.log(await guess(req.body.attempt))
-                // @ts-ignore
-        } catch(err){
-            console.log(`Error at /play: ${err}`)
-        }
-
-    })
+    res.status(200).sendFile('/Users/nolimit/repos/mastermind-reach/frontend/board.html')
 })
-//</editor-fold>
+
+    // @ts-ignore
+app.post('/play', express.urlencoded({extended: true}), async (req, res) => {
+    req.session.attemptCount = 0
+    try {
+        let findNumberAndLocation = (objective: string[], guess: string[]) => {
+            let locationCounter: number = 0
+            for (let i = 0; i < objective.length; i++) {
+                // @ts-ignore
+                if (objective[i] == guess[i]) {
+                    locationCounter++
+                }
+            } // location
+            let numberCounter: number = 0
+            const noDuplicates: Set<string> = new Set<string>(objective)
+            noDuplicates.forEach(i => {
+                if (guess.includes(i)) {
+                    numberCounter += 1
+                }
+            })
+            // remove duplicates, so this doesn't ruin the data.
+            return `${numberCounter} correct numbers, ${locationCounter} correct locations.`
+        }
+        // returns the result of the api call to a variable
+        let start = () => {
+            let guess = async (num: string): Promise<string | undefined> => {
+                // @ts-ignore
+                // must be returned, so I left it out of the scope of the try catch block.
+                counter += 1
+                req.session.guesses?.push(req.body.attempt)
+                let guessArray: string[] = num ? Array.from(req.body.attempt) : ['']
+                let targetArray: string | undefined = await target
+                if (guessArray.toString() === targetArray?.toString()) {
+                    console.log('win')
+                }
+                // @ts-ignore
+                let gameFeedback = findNumberAndLocation(targetArray, guessArray)
+                console.log(guessArray)
+                console.log(targetArray)
+                // @ts-ignore
+                if (counter > 10) {
+                    console.log('loss')
+                    // game.result = 'loss'
+                }
+                console.log(gameFeedback)
+                res.json({
+                    message: gameFeedback
+                })
+                return `${gameFeedback}`
+            }
+            return guess
+        }
+        let newgame = start()
+        newgame(req.body.attempt)
+
+    }
+    catch(err){
+        console.log(err)
+    }
+})
+
 app.listen(3000, (): void => {
     console.log('server is running.')
 })
+            // the number of matches
+        // @ts-ignor
+//</editor-fold>
+

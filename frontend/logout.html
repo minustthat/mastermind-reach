@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<form action = "/logout" method="POST">
+    <button id = "logout-button" class = "flow-buttons"> Log Out </button>
+</form>
+    <script>
+        let button = document.getElementById('logout-button')
+        button.addEventListener('submit', (event) => {
+        event.preventDefault();
+        const formData = new FormData(form)
+
+        fetch('/logout', {
+        method: 'POST',
+        credentials: 'include'
+    })
+        .then(response => response.json())
+        .then(data => {
+        console.log('Success:', data);
+        alert('Logout successful!');
+    })
+        .catch(error => {
+        console.error('Error:', error);
+        alert('Logout failed');
+    });
+    });
+</script>
+</body>
+</html>

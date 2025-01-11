@@ -2,8 +2,9 @@ import {sessionCollection, userCollection} from "./database.ts";
 import Player from "../game-components/player.ts";
 import bcrypt from "bcrypt";
 import {ObjectId} from "mongodb";
+
 export default class SessionClient {
-    addSessionToDb = async (obj: Object) => {
+    addGameToDb = async (obj: Object) => {
         try {
             await sessionCollection.insertOne(obj)
             return `Object inserted: ${JSON.stringify(obj)}`
@@ -92,6 +93,7 @@ export default class SessionClient {
             console.log(`Error registering: ${err}`)
         }
         await this.addUserToDb(player).catch(err => console.log(`Error: ${err}`))
+        return player
     }
     returnUserFromId = async (id: ObjectId | undefined): Promise<Player> => {
         let player: Player = {
