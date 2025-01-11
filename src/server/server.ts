@@ -13,6 +13,7 @@ import SinglePlayerGameConfiguration from "../game-creation/SinglePlayerGameConf
 import {gameFactory} from "../game-creation/gameFactory.ts";
 import Player from "../game-components/player.ts";
 import {generateNumbers} from "../game-components/generateNumbers.ts";
+import cookieParser from "cookie-parser"
 /* this declaration is needed in order to set the isAuth property on Session to true. Without it, typescript is unable to find this
 property.
  */
@@ -23,7 +24,7 @@ declare module "express-session" {
         game?: SinglePlayerGameConfiguration
         destroy: () => void
         user: Player
-        difficulty?: string
+        difficulty: string
         guesses?: string[]
     }
 }
@@ -41,6 +42,7 @@ const target = generateNumbers('easy')
 let counter = 0
 const frontendPath: string = path.resolve(__dirname, '../../frontend');
 app.use(cors())
+app.use(cookieParser())
 app.use(session({
     secret: 'reach-mastermind',
     resave: false,
@@ -122,11 +124,12 @@ app.get('/setup', async (req: Request, res: Response) => {
     res.sendFile('/Users/nolimit/repos/mastermind-reach/frontend/setup.html')
 })
 app.post('/setup', express.urlencoded({extended: true}), async (req: Request, res: Response) => {
-    res.status(200).redirect('/play')
     const user = await sessionClient.returnUserFromId(req.session.userId)
     req.session.user = user
+    console.log(user)
     req.session.isAuth = true
     req.session.difficulty = req.body.difficulty
+    res.status(200).redirect('/play')
     const generateTargetNumber = async () => {
         const apiCall = generateNumbers(req.session.difficulty ?? 'easy')
         // calls the api
@@ -170,15 +173,16 @@ app.post('/play', express.urlencoded({extended: true}), async (req, res) => {
         }
         // returns the result of the api call to a variable
         let start = () => {
+            // @ts-ignore
+            const game = gameFactory(req.session.user  , req.session.difficulty)
+            const newgame = game.startGame()
             let guess = async (num: string): Promise<string | undefined> => {
-                // @ts-ignore
-                // must be returned, so I left it out of the scope of the try catch block.
                 counter += 1
-                req.session.guesses?.push(req.body.attempt)
                 let guessArray: string[] = num ? Array.from(req.body.attempt) : ['']
                 let targetArray: string | undefined = await target
                 if (guessArray.toString() === targetArray?.toString()) {
-                    console.log('win')
+                    res.send('you win!')
+                    await sessionClient.addGameToDb(game)
                 }
                 // @ts-ignore
                 let gameFeedback = findNumberAndLocation(targetArray, guessArray)
@@ -186,30 +190,28 @@ app.post('/play', express.urlencoded({extended: true}), async (req, res) => {
                 console.log(targetArray)
                 // @ts-ignore
                 if (counter > 10) {
-                    console.log('loss')
-                    // game.result = 'loss'
+                    game.result="loss"
+                    await sessionClient.addGameToDb(game)
+                    res.send("Game Over :(")
+                    console.log(game)
                 }
                 console.log(gameFeedback)
-                res.json({
-                    message: gameFeedback
-                })
                 return `${gameFeedback}`
             }
             return guess
         }
         let newgame = start()
         newgame(req.body.attempt)
-
     }
     catch(err){
         console.log(err)
     }
 })
-
+/* the original idea was to import the startGame method from the SinglePlayerGameConfiguration class,
+but I found it a bit difficult to hold state and avoid generating new numbers each time I pressed a button.
+*/
 app.listen(3000, (): void => {
     console.log('server is running.')
 })
-            // the number of matches
-        // @ts-ignor
 //</editor-fold>
 

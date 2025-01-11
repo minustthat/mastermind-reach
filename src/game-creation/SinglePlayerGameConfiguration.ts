@@ -43,8 +43,6 @@ export default class SinglePlayerGameConfiguration extends EventEmitter implemen
         let attemptCount: number = 0
         // keeps track of the number of tries, if this number exceeds 10 then the game is over and the user has lost.
         let targetNumber: Promise<string[] | undefined> = this.generateTargetNumber()
-
-
         // returns the result of the api call to a variable
         let guess = async (num: string): Promise<string | undefined> => {
             let feedback = ''
@@ -55,7 +53,7 @@ export default class SinglePlayerGameConfiguration extends EventEmitter implemen
                 // increment attempt counter
                 let guessArray: string[] = Array.from(num)
                 let targetArray: string[] = await targetNumber ?? ['']
-                if(guessArray === targetArray){
+                if (guessArray === targetArray) {
                     this.result = 'won'
                     this.emit('win')
                     // just create an event for this, and when when is done send a message to the browser and save to db.
@@ -63,7 +61,7 @@ export default class SinglePlayerGameConfiguration extends EventEmitter implemen
                 feedback = this.findNumberAndLocation(targetArray, guessArray)
                 console.log(targetArray)
                 console.log(attemptCount)
-                if(attemptCount > 10){
+                if (attemptCount > 10) {
                     this.result = 'loss'
                     this.emit('loss')
                 }
@@ -79,22 +77,18 @@ export default class SinglePlayerGameConfiguration extends EventEmitter implemen
     findNumberAndLocation(objective: string[], guess: string[]) {
         let locationCounter: number = 0
         for (let i = 0; i < objective.length; i++) {
-                // @ts-ignore
-                if (objective[i] == guess[i]) {
-                    locationCounter++
+            // @ts-ignore
+            if (objective[i] == guess[i]) {
+                locationCounter++
             }
         } // location
         let numberCounter: number = 0
         const noDuplicates: Set<string> = new Set<string>(objective)
         noDuplicates.forEach(i => {
-            if(guess.includes(i)){
-                numberCounter+=1
+            if (guess.includes(i)) {
+                numberCounter += 1
             }
         })
-        // remove duplicates, so this doesn't ruin the data.
         return `${numberCounter} correct numbers, ${locationCounter} correct locations.`
     }
-    //finds number of matches, and number of locations where matches are.
-
 }
-// track number and location
