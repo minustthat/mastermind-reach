@@ -40,7 +40,7 @@ const store = new MongoDBStore(
 )
 const target = generateNumbers('easy')
 let counter = 0
-const frontendPath: string = path.resolve(__dirname, '../../frontend');
+let guesses: string[] = []
 app.use(cors())
 app.use(cookieParser())
 app.use(session({
@@ -53,12 +53,15 @@ app.use(session({
     }
 }))
 app.use(express.json());
-app.use(express.static(frontendPath));
+app.use(express.static(path.join(__dirname, '../../frontend')));
 //</editor-fold>
 
+app.get('/', (req: Request, res: Response) => {
+    res.redirect('/register')
+})
 //<editor-fold desc = "registration">
 app.get('/register', (req: Request, res: Response): void => {
-    res.status(200).sendFile('/Users/nolimit/repos/mastermind-reach/frontend/register.html')
+    res.status(200).sendFile(path.join(__dirname, '../../frontend/register.html'));
 })
 app.post('/register', express.urlencoded({extended: true}), async(req: Request, res: Response) => {
     try {
@@ -79,7 +82,7 @@ app.post('/register', express.urlencoded({extended: true}), async(req: Request, 
 
 //<editor-fold desc = "login"
 app.get('/login', (req, res) => {
-    res.status(200).set({'Content-Type': 'text/html'}).sendFile('/Users/nolimit/repos/mastermind-reach/frontend/login.html')
+    res.status(200).set({'Content-Type': 'text/html'}).sendFile(path.join(__dirname, '../../frontend/login.html'));
 })
 app.post('/login', express.urlencoded({extended: true}), async (req: Request, res: Response) => {
     try {
@@ -100,7 +103,7 @@ app.post('/login', express.urlencoded({extended: true}), async (req: Request, re
     }
 })
 app.get('/logout', (req,res) => {
-    res.status(200).sendFile('/Users/nolimit/repos/mastermind-reach/frontend/logout.html')
+    res.status(200).sendFile(path.join(__dirname, '../../frontend/login.html'))
 })
 app.post('/logout', (req,res) => {
     try{
@@ -121,7 +124,7 @@ app.post('/logout', (req,res) => {
 
 // set difficulty
 app.get('/setup', async (req: Request, res: Response) => {
-    res.sendFile('/Users/nolimit/repos/mastermind-reach/frontend/setup.html')
+    res.sendFile(path.join(__dirname, '../../frontend/setup.html'));
 })
 app.post('/setup', express.urlencoded({extended: true}), async (req: Request, res: Response) => {
     const user = await sessionClient.returnUserFromId(req.session.userId)
@@ -147,7 +150,7 @@ app.post('/setup', express.urlencoded({extended: true}), async (req: Request, re
 
 // play game
 app.get('/play', (req: Request, res: Response) => {
-    res.status(200).sendFile('/Users/nolimit/repos/mastermind-reach/frontend/board.html')
+    res.status(200).sendFile(path.join(__dirname, '../../frontend/board.html'));
 })
 
     // @ts-ignore
@@ -179,18 +182,21 @@ app.post('/play', express.urlencoded({extended: true}), async (req, res) => {
             let guess = async (num: string): Promise<string | undefined> => {
                 counter += 1
                 let guessArray: string[] = num ? Array.from(req.body.attempt) : ['']
+                guesses.push(req.body.attempt)
+                console.log(guesses)
                 let targetArray: string | undefined = await target
                 if (guessArray.toString() === targetArray?.toString()) {
+                    game.guesses = guesses
                     res.send('you win!')
                     await sessionClient.addGameToDb(game)
                 }
                 // @ts-ignore
                 let gameFeedback = findNumberAndLocation(targetArray, guessArray)
-                console.log(guessArray)
                 console.log(targetArray)
                 // @ts-ignore
                 if (counter > 10) {
                     game.result="loss"
+                    game.guesses = guesses
                     await sessionClient.addGameToDb(game)
                     res.send("Game Over :(")
                     console.log(game)
